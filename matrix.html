@@ -1,0 +1,88 @@
+<meta charset="utf-8">
+<canvas id="canvas" style="background: black" width="800" height="800">不支持canvas</canvas>
+<script>
+    var canvas = document.getElementById('canvas')
+    var ctx = null;
+    var current = 0;
+    var speed = 2;
+    var canvasW = canvas.width
+    var canvasH = canvas.height
+    var fontSize = 20;
+
+    var letters = '0123456789*/-+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[],.:`';
+    var lettersLength = letters.length;
+    var pots = []
+    if (canvas.getContext) {
+        ctx = canvas.getContext('2d');
+        generatePots();
+        // draw()
+        matrixAnimate()
+    }
+    function pot () {
+        var _pot = {}
+        _pot.x = 0;
+        _pot.y = 0;
+        _pot.z = 0;
+        _pot.endX = canvasW;
+        _pot.endY = canvasH;
+        _pot.endZ = 0;
+        _pot.name = 'A';
+        _pot.opacity = 1;
+        _pot.speed = 1;
+        return _pot
+    }
+    function generatePots () {
+        for (var i = 0; i< canvasW/fontSize; i++) {
+            for (var j = 0; j < canvasH/fontSize; j++) {
+                var _pot = new pot();
+                _pot.x = fontSize*i
+                _pot.y = fontSize*j
+                _pot.name = letters[Math.floor(Math.random()*lettersLength)]
+                _pot.opacity = 1 - j*0.1
+                pots.push(_pot)
+            }
+        }
+    }
+    var _speed = Math.round(Math.random())
+    function draw () {
+        for (var k = 0; k < pots.length; k++) {
+            var _dot = pots[k]
+            var _lastDot = pots[k-1] || {}
+            if (k && _dot.x !== _lastDot.x ) {
+                _speed = Math.round(Math.random())
+            }
+            _dot.y = _dot.y + fontSize*_speed
+            if (_dot.y > _dot.endY) {
+                _dot.y = 0
+                _dot.name = letters[Math.floor(Math.random()*lettersLength)]
+            }
+            drawLetter(pots[k])
+        }
+    }
+    function drawLetter (obj) {
+        ctx.save()
+        ctx.fillStyle = "rgba(51, 255, 51, "+obj.opacity+")"
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center'
+        ctx.textBaseline = "middle"
+        ctx.fillText(obj.name,obj.x,obj.y)
+        ctx.restore()
+    }
+    function matrixAnimate () {
+        ctx.clearRect(0,0,canvas.width , canvas.height);
+        draw()
+        if("requestAnimationFrame" in window){
+            requestAnimationFrame(matrixAnimate);
+        }
+        else if("webkitRequestAnimationFrame" in window){
+            webkitRequestAnimationFrame(matrixAnimate);
+        }
+        else if("msRequestAnimationFrame" in window){
+            msRequestAnimationFrame(matrixAnimate);
+        }
+        else if("mozRequestAnimationFrame" in window){
+            mozRequestAnimationFrame(matrixAnimate);
+        }
+    }
+
+</script>

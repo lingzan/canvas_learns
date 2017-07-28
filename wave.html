@@ -1,0 +1,154 @@
+<meta charset="utf-8">
+<canvas id="canvas" width="800" height="800">不支持canvas</canvas>
+<script>
+/*copy 代码 没有自己去想...*/
+    var canvas = document.getElementById('canvas')
+    var ctx = null;
+    var current = 0;
+    var speed = 2;
+    var rectWave = {}
+    var rectWater = {}
+
+    rectWave.color = '#92dafd'
+    rectWave.width = canvas.width
+    rectWave.height = 20
+    rectWave.x = 0
+    rectWave.y = canvas.height - 20 - 300
+
+    rectWater.color = '#0af'
+    rectWater.width = canvas.width
+    rectWater.height = 300
+    rectWater.x = 0
+    rectWater.y = canvas.height - 300
+
+    var x = canvas.width/2
+    var y = canvas.height/2
+    var vertexes = []
+    var diffPt = []
+
+    var vPos = 125;  //震荡点
+    var dd = 15;     //缓冲
+    var autoDiff = 1000;  //初始差分值
+
+    for(var i=0; i< 250; i++){
+        vertexes[i] = new Vertex(canvas.width/(250-1) * i, x, y);
+        diffPt[i] = 0;                                         //初始值都为0
+    }
+    console.log(vertexes)
+
+    if (canvas.getContext) {
+        ctx = canvas.getContext('2d');
+        progressAnimate()
+    }
+    function drawRect (rect) {
+        ctx.save()
+        ctx.fillStyle= rect.color
+        ctx.beginPath()
+        ctx.moveTo(0, canvas.height)
+        ctx.lineTo(vertexes[0].x, vertexes[0].y)
+        for (var i = 1; i < vertexes.length ; i++) {
+            ctx.lineTo(vertexes[i].x, vertexes[i].y)
+        }
+        ctx.lineTo(canvas.width, canvas.height)
+        ctx.lineTo(0, canvas.height)
+        ctx.fill()
+        ctx.closePath()
+        ctx.restore();
+    }
+    function drawRect2 (rect) {
+        ctx.save()
+        ctx.fillStyle= rect.color
+        ctx.beginPath()
+        ctx.moveTo(0, canvas.height)
+        ctx.lineTo(vertexes[0].x, vertexes[0].y + 15)
+        for (var i = 1; i < vertexes.length ; i++) {
+            ctx.lineTo(vertexes[i].x, vertexes[i].y + 15)
+        }
+        ctx.lineTo(canvas.width, canvas.height)
+        ctx.lineTo(0, canvas.height)
+        ctx.fill()
+        ctx.closePath()
+        ctx.restore();
+    }
+    function update () {
+        autoDiff -= autoDiff*0.9
+        diffPt[vPos] = autoDiff;
+
+        for (var i = vPos -1; i > 0 ; i--) {
+            var d =  vPos - i;
+            if (d>dd) {
+                d = dd
+            }
+            diffPt[i] -= (diffPt[i] - diffPt[i+1])*(1-0.01*d);
+        }
+        for (var i = vPos + 1; i < 250 ; i++) {
+            var d =  i - vPos;
+            if (d>dd) {
+                d = dd
+            }
+            diffPt[i] -= (diffPt[i] - diffPt[i-1])*(1-0.01*d);
+        }
+
+        for (var i = 0; i < vertexes.length ; i++) {
+            // console.log(vertexes[i])
+            vertexes[i].targetY = diffPt[i] + vertexes[i].baseY;   //改变目标位置
+            vertexes[i].vy += (vertexes[i].targetY - vertexes[i].y);       //速度
+            // 
+            vertexes[i].vy *= vertexes[i].deceleration;
+            vertexes[i].y += vertexes[i].vy * vertexes[i].friction;     //改变坐标竖直方向的位置
+        }
+    }
+    function Vertex(x,y,baseY) {
+        this.baseY = baseY //基线
+        this.x = x  //点的坐标
+        this.y = y
+        this.vy = 0;  //竖直方向的速度
+        this.targetY = 0;  //目标位置
+        this.friction = 0.15 //摩擦力
+        this.deceleration = 0.95 //减速
+    }
+    Vertex.prototype.updateY = function(diffVal){
+        this.targetY = diffVal + this.baseY;   //改变目标位置
+        this.vy += (this.targetY - this.y);       //速度
+        this.vy *= this.deceleration;
+        this.y += this.vy * this.friction;     //改变坐标竖直方向的位置
+    }
+    function progressAnimate () {
+        ctx.clearRect(0,0,canvas.width , canvas.height);
+        console.log(321)
+        update()
+        drawRect(rectWave)
+        drawRect2(rectWater)
+        if("requestAnimationFrame" in window){
+            requestAnimationFrame(progressAnimate);
+        }
+        else if("webkitRequestAnimationFrame" in window){
+            webkitRequestAnimationFrame(progressAnimate);
+        }
+        else if("msRequestAnimationFrame" in window){
+            msRequestAnimationFrame(progressAnimate);
+        }
+        else if("mozRequestAnimationFrame" in window){
+            mozRequestAnimationFrame(progressAnimate);
+        }
+    }
+    canvas.addEventListener('click', function(e){
+        var mouse = {x:null, y:null};
+
+        if(e.pageX||e.pageY){
+            mouse.x = e.pageX;
+            mouse.y = e.pageY;
+        }else{ 
+            mouse.x = e.clientX + document.body.scrollLeft +document.documentElement.scrollLeft;
+            mouse.y = e.clientY + document.body.scrollTop +document.documentElement.scrollTop;
+        }
+
+        //重设差分值
+        if(mouse.y>(canvas.height/2-50) && mouse.y<(canvas.height/2 +50)){
+            autoDiff = 1000;
+            vPos = 1 + Math.floor((250 - 2) * mouse.x / canvas.width);
+            diffPt[vPos] = autoDiff;
+        }
+
+    }, false)
+</script>
